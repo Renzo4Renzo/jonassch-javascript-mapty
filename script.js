@@ -11,6 +11,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class Workout {
   date = new Date();
   id = String(Date.now()).slice(-10);
+  clicks = 0;
 
   constructor(coordinates, distance, duration) {
     this.coordinates = coordinates; // [lat, long]
@@ -49,6 +50,10 @@ class Workout {
       return date + 'th';
     }
   }
+
+  _countClick() {
+    this.clicks++;
+  }
 }
 
 class Running extends Workout {
@@ -85,6 +90,7 @@ class Cycling extends Workout {
 // APLICATION ARCHITECTURE
 class App {
   #map;
+  #zoomLevel = 14;
   #mapEvent;
   #workouts = [];
 
@@ -92,6 +98,7 @@ class App {
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    containerWorkouts.addEventListener('click', this._moveToPopUp.bind(this));
   }
 
   _getPosition() {
@@ -109,7 +116,7 @@ class App {
     const { latitude, longitude } = position.coords;
     const coordinates = [latitude, longitude];
 
-    this.#map = L.map('map').setView(coordinates, 14);
+    this.#map = L.map('map').setView(coordinates, this.#zoomLevel);
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -259,6 +266,22 @@ class App {
         `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`
       )
       .openPopup();
+  }
+
+  _moveToPopUp(event) {
+    const workoutElement = event.target.closest('.workout');
+    if (!workoutElement) return;
+
+    const selectedWorkout = this.#workouts.find(
+      workout => workout.id === workoutElement.dataset.id
+    );
+
+    this.#map.setView(selectedWorkout.coordinates, this.#zoomLevel, {
+      animate: true,
+      pan: { duration: 1 },
+    });
+
+    selectedWorkout._countClick();
   }
 }
 
