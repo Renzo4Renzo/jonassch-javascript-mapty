@@ -96,6 +96,7 @@ class App {
 
   constructor() {
     this._getPosition();
+    this._getLocalStorage();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopUp.bind(this));
@@ -122,6 +123,11 @@ class App {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workouts.forEach(workout => {
+      this._renderWorkout(workout);
+      this._renderWorkoutMarker(workout);
+    });
   }
 
   _showForm(event) {
@@ -199,6 +205,8 @@ class App {
     this._renderWorkoutMarker(workout);
     this._renderWorkout(workout);
     this._hideForm();
+
+    this._setLocalStorage();
   }
 
   _renderWorkout(workout) {
@@ -281,7 +289,23 @@ class App {
       pan: { duration: 1 },
     });
 
-    selectedWorkout._countClick();
+    // selectedWorkout._countClick(); //This doesn't work with object coming from local storage!
+  }
+
+  _setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const workoutsStored = JSON.parse(localStorage.getItem('workouts'));
+
+    if (!workoutsStored) return;
+    this.#workouts = workoutsStored;
+  }
+
+  _reset() {
+    localStorage.removeItem('workouts');
+    location.reload();
   }
 }
 
